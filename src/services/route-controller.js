@@ -120,22 +120,23 @@ class RouteController {
                 }
                 break;
             case 'get_account':
-                let account = await Account.getNewAccount(minLevel, maxLevel, true);
-                console.log('[Controller] GetAccount:', account);
-                if (device === undefined || device === null || 
-                    account === undefined || account === null) {
-                    console.error('[Controller] Failed to get event account, device or account is null.');
-                    return res.sendStatus(400);
+                // Workaround For GDS get_account Spam
+                let accountCheck = await Account.getWithUsername(device.accountUsername, true);
+                if (accountCheck != undefined || accountCheck != null) {
+                    console.error('[Controller] GDS Pass Account Info.');
+                    sendResponse(res, 'ok', {
+                        username: accountCheck.username.trim(),
+                        password: accountCheck.password.trim(),
+                        first_warning_timestamp: accountCheck.firstWarningTimestamp,
+                        level: accountCheck.level
+                    });
                 }
-                if (device.accountUsername) {
-                    let oldAccount = await Account.getWithUsername(device.accountUsername, true);
-                    if (oldAccount instanceof Account && 
-                        oldAccount.hasTicket &&
-                        oldAccount.level >= minLevel &&
-                        oldAccount.level <= maxLevel &&
-                        oldAccount.firstWarningTimestamp === undefined && 
-                        oldAccount.failed                === undefined && 
-                        oldAccount.failedTimestamp       === undefined) {
+                let account = await Account.getNewAccount(minLevel, maxLevel, true);
+                if (accountCheck === undefined || accountCheck === null) {
+                    console.log('[Controller] GetAccount:', account);
+                    if (device === undefined || device === null || 
+                        account === undefined || account === null) {
+                        console.error('[Controller] Failed to get event account, device or account is null.');
                         sendResponse(res, 'ok', {
                             username: oldAccount.username.trim(),
                             password: oldAccount.password.trim(),
@@ -144,21 +145,39 @@ class RouteController {
                         });
                         return;
                     }
-                }
+                    if (device.accountUsername) {
+                        let oldAccount = await Account.getWithUsername(device.accountUsername, true);
+                        if (oldAccount instanceof Account && 
+                            oldAccount.hasTicket &&
+                            oldAccount.level >= minLevel &&
+                            oldAccount.level <= maxLevel &&
+                            oldAccount.firstWarningTimestamp === undefined && 
+                            oldAccount.failed                === undefined && 
+                            oldAccount.failedTimestamp       === undefined) {
+                            sendResponse(res, 'ok', {
+                                username: oldAccount.username.trim(),
+                                password: oldAccount.password.trim(),
+                                first_warning_timestamp: oldAccount.firstWarningTimestamp,
+                                level: oldAccount.level
+                            });
+                            return;
+                        }
+                    }
 
-                if (!account.hasTicket) {
-                    console.error('[Controller] Failed to get event account, make sure you have enough!');
-                    return res.sendStatus(404);
+                    if (!account.hasTicket) {
+                        console.error('[Controller] Failed to get event account, make sure you have enough!');
+                        return res.sendStatus(404);
+                    }
+                    device.accountUsername = account.username;
+                    device.deviceLevel = account.level;
+                    await device.save(device.uuid);
+                    sendResponse(res, 'ok', {
+                        username: account.username.trim(),
+                        password: account.password.trim(),
+                        first_warning_timestamp: account.firstWarningTimestamp,
+                        level: account.level
+                    });
                 }
-                device.accountUsername = account.username;
-                device.deviceLevel = account.level;
-                await device.save(device.uuid);
-                sendResponse(res, 'ok', {
-                    username: account.username.trim(),
-                    password: account.password.trim(),
-                    first_warning_timestamp: account.firstWarningTimestamp,
-                    level: account.level
-                });
                 break;
             case 'account_banned':
                 let banAccount = await Account.getWithUsername(device.accountUsername, true);
