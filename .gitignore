@@ -105,3 +105,4 @@ dist
 
 # Config Data
 config.json
+src/accounts.csv
