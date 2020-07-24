@@ -66,8 +66,8 @@ class TaskFactory {
         return {
             'area': this.instanceName,
             'action': 'scan_iv',
-            'lat': pokemon.latitude,
-            'lon': pokemon.longitude,
+            'lat': Number(pokemon.latitude),
+            'lon': Number(pokemon.longitude),
             'id': pokemon.encounter_id,
             'is_spawnpoint': pokemon.spawnpoint_id !== undefined && pokemon.spawnpoint_id !== null,
             'min_level': this.minLevel,
