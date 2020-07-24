@@ -600,10 +600,10 @@ class Pokemon {
      */
     toJson() {
         // Get pvp stats from PVP cache if IV stats are the same
-        let pvpRanks = TaskFactory.pvpCache.filter(x => x.encounter_id === this.id &&
-                                                        x.individual_attack === this.atkIv &&
-                                                        x.individual_defense === this.defIv &&
-                                                        x.individual_stamina === this.staIv);
+        //let pvpRanks = TaskFactory.pvpCache.filter(x => x.encounter_id === this.id &&
+        //                                                x.individual_attack === this.atkIv &&
+        //                                                x.individual_defense === this.defIv &&
+        //                                                x.individual_stamina === this.staIv);
         //console.log('PvP Ranks:', pvpRanks.length);
         return {
             type: 'pokemon',
