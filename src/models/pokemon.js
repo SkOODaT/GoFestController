@@ -4,11 +4,10 @@ const moment = require('moment');
 
 const config = require('../config.json');
 const Cell = require('./cell.js');
-const Pokestop = require('./pokestop.js');
 const Spawnpoint = require('./spawnpoint.js');
+const MySQLConnector = require('../services/mysql.js');
 const TaskFactory = require('../services/task-factory.js');
 const WebhookController = require('../services/webhook-controller.js');
-const MySQLConnector = require('../services/mysql.js');
 const { getCurrentTimestamp, generateEncounterId } = require('../utilities/utils.js');
 
 const db = new MySQLConnector(config.db.rdm);
@@ -20,6 +19,8 @@ class Pokemon {
     static PokemonTimeUnseen = 1200;
     static PokemonTimeReseen = 600;
     static DittoDisguises = [46,163,165,167,187,223,293,316,322,399,590];
+    static DittoMove1Transform = 242;
+    static DittoMove2Struggle = 133;
 
     id;
     lat;
@@ -120,9 +121,9 @@ class Pokemon {
             this.weather = data.wild.pokemon_data.pokemon_display.weather_boosted_condition;
         }
         this.username = data.wild.username;
-        let currentTimestamp = getCurrentTimestamp() * 1000;
+        let currentTimestamp = getCurrentTimestamp();
         if (data.wild.time_till_hidden_ms > 0 && data.wild.time_till_hidden_ms <= 90000) {
-            this.expireTimestamp = Math.round(currentTimestamp / 1000 + data.wild.time_till_hidden_ms);
+            this.expireTimestamp = Math.round(currentTimestamp + data.wild.time_till_hidden_ms);
             this.expireTimestampVerified = true;
         } else {
             this.expireTimestampVerified = false;
@@ -136,7 +137,7 @@ class Pokemon {
                 spawnpoint = null;
             }
             if (spawnpoint instanceof Spawnpoint) {
-                let expireTimestamp = this.getDespawnTimer(spawnpoint, currentTimestamp);
+                let expireTimestamp = this.getDespawnTimer(spawnpoint);
                 if (expireTimestamp > 0) {
                     this.expireTimestamp = expireTimestamp;
                     this.expireTimestampVerified = true;
@@ -304,7 +305,7 @@ class Pokemon {
                     spawnpoint = null;
                 }
                 if (spawnpoint instanceof Spawnpoint) {
-                    let expireTimestamp = this.getDespawnTimer(spawnpoint, getCurrentTimestamp() * 1000);
+                    let expireTimestamp = this.getDespawnTimer(spawnpoint);
                     if (expireTimestamp > 0) {
                         this.expireTimestamp = expireTimestamp;
                         this.expireTimestampVerified = true;
@@ -322,13 +323,11 @@ class Pokemon {
      * @param displayPokemonId 
      */
     setDittoAttributes(displayPokemonId) {
-        let moveTransformFast = 242;
-        let moveStruggle = 133;
         this.displayPokemonId = displayPokemonId;
         this.pokemonId = Pokemon.DittoPokemonId;
         this.form = 0;
-        this.move1 = moveTransformFast;
-        this.move2 = moveStruggle;
+        this.move1 = Pokemon.DittoMove1Transform;
+        this.move2 = Pokemon.DittoMove2Struggle;
         this.gender = 3;
         this.costume = 0;
         this.size = 0;
@@ -460,8 +459,8 @@ class Pokemon {
                     this.level = oldPokemon.level;
                     this.shiny = oldPokemon.shiny;
                     this.isDitto = Pokemon.isDittoDisguisedFromPokemon(oldPokemon);
-                    if (this.isDitto) {
-                        console.log('[POKEMON] oldPokemon', this.id, 'Ditto found, disguised as', this.pokemonId);
+                    if (this.isDitto !== false) {
+                        console.log('[POKEMON] oldPokemon', oldPokemon.pokemonId, 'Ditto found, disguised as', this.pokemonId);
                         this.setDittoAttributes(this.pokemonId);
                     }
                 }
@@ -578,12 +577,11 @@ class Pokemon {
     getDespawnTimer(spawnpoint, timestampMs) {
         let despawnSecond = spawnpoint.despawnSecond;
         if (despawnSecond) {
-            let date = moment(timestampMs / 1000);
-            let dateFormat = date.format('mm:ss');
-            let dateUnix = date.format('x');
-            let split = dateFormat.split(':');
-            let minute = parseInt(split[0]);
-            let second = parseInt(split[1]);
+            let currentDate = new Date();
+            let currentTime = Math.floor(currentDate / 1000);
+            let ts = currentTime.toString();
+            let minute = currentDate.getMinutes();
+            let second = currentDate.getSeconds();
             let secondOfHour = second + minute * 60;
 
             let despawnOffset;
@@ -592,7 +590,7 @@ class Pokemon {
             } else {
                 despawnOffset = despawnSecond - secondOfHour;
             }
-            let despawn = parseInt(dateUnix) + despawnOffset;
+            let despawn = parseInt(ts) + despawnOffset;
             return despawn;
         }
     }

@@ -428,6 +428,7 @@ class RouteController {
             <th>Pokemon</th>
             <th>Form</th>
             <th>Stats</th>
+            <th>Expires</th>
             <th>Location</th>
           </tr>
         `;
@@ -440,6 +441,7 @@ class RouteController {
               <td>${task.pokemon_id}</td>
               <td>${task.form}</td>
               <td>${task.individual_attack}/${task.individual_defense}/${task.individual_stamina}</td>
+              <td>${new Date(task.disappear_time * 1000).toLocaleString()}</td>
               <td>${task.latitude}, ${task.longitude}</td>
             </tr>
             `;
@@ -448,6 +450,11 @@ class RouteController {
         res.send(html);
     }
 
+    /**
+     * Handle consumable items
+     * @param {*} encounters 
+     * @param {*} username 
+     */
     static async handleConsumables(encounters, username) {
         if (encounters.length > 0) {
             //console.log('[Raw] Encounters:', encounters);

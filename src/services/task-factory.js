@@ -14,6 +14,8 @@ class TaskFactory {
     minLevel;
     maxLevel;
 
+    expireDelay = 15;
+
     /**
      * Instantiate a new TaskFactory object
      */
@@ -21,6 +23,7 @@ class TaskFactory {
         this.instanceName = instanceName;
         this.minLevel = minLevel;
         this.maxLevel = maxLevel;
+        this.timer = setInterval(() => this.clearExpired(), this.expireDelay * 1000);
     }
 
     /**
@@ -53,10 +56,30 @@ class TaskFactory {
     }
 
     /**
+     * Clear expired tasks
+     */
+    clearExpired() {
+        // Loop through all tasks and check if they are expired, if so remove them
+        for (let i = 0; i < TaskFactory.ivCache.length; i++) {
+            // Get expiration timestamp
+            let expires = TaskFactory.ivCache[i].disappear_time;
+            // Get now timestamp
+            let now = Math.round(new Date().getTime() / 1000);
+            // Check if current timestamp is greater than expiration timestamp
+            if (now > expires) {
+                // Remove item at index of cache
+                console.log('[TaskFactory] Removing stale encounter', TaskFactory.ivCache[i].encounter_id, 'from ivCache at index', i + '/' + TaskFactory.ivCache.length, 'expiration time was', new Date(expires * 1000).toLocaleString());
+                TaskFactory.ivCache.splice(i, 1);
+            }
+        }
+    }
+
+    /**
      * Get a task for a device
      */
     getTask() {
         console.log('[TaskFactory] Task list:', TaskFactory.ivCache.length);
+        // Grab a task from the top of the queue
         let pokemon = this.dequeue();
         if (pokemon === undefined || pokemon === null) {
             return null;
