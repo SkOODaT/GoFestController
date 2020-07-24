@@ -6,6 +6,7 @@
     "instanceName": "GoFest-Test",
     "requeueWeatherChanged": true,
     "randomizeEncounter": true,
+    "minIVPercentage": 90,
     "filters": [
         { "atk": 15, "def": 15, "sta": 15 },
         { "atk": 15, "def": 15, "sta": 14 },

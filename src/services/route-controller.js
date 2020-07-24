@@ -366,10 +366,16 @@ class RouteController {
         if (payload.length > 0) {
                 let filtered = payload.filter(x => {
                 let geofence = GeofenceService.instance.getGeofence(x.message.latitude, x.message.longitude);
+                let minIVPercentage = config.minIVPercentage;
+                let CIVPercentage = IVPercentage(x.message.individual_attack, x.message.individual_defense, x.message.individual_stamina);
+                if (CIVPercentage >= minIVPercentage) {
+                    console.log(x.message.individual_attack, x.message.individual_defense, x.message.individual_stamina, '- IV', CIVPercentage, '%')
+                }
                 return x.type === 'pokemon' &&
                     (
                         // If has `is_scout` webhook property queue payload or if matches IV filter
-                        x.message.is_scout || matchesIVFilter(x.message.individual_attack, x.message.individual_defense, x.message.individual_stamina) &&
+                        x.message.is_scout || matchesIVFilter(x.message.individual_attack, x.message.individual_defense, x.message.individual_stamina) || 
+                        CIVPercentage >= minIVPercentage &&
                         (
                             // No geofence names specified means no area restrictions
                             // or if geofence is not null and is in allowed areas
@@ -462,6 +468,14 @@ class RouteController {
             }
         }
     }
+}
+
+const IVPercentage = (atk, def, sta) => {
+    let atkIV = parseInt(atk);
+    let defIV = parseInt(def);
+    let staIV = parseInt(sta);
+    let ivPercentage = (100 * (atkIV + defIV + staIV) / parseFloat(45)).toFixed(3)
+    return ivPercentage
 }
 
 const matchesIVFilter = (atk, def, sta) => {
