@@ -60,8 +60,12 @@ class RouteController {
                     });
                 } else {
                     // Register new device
+                    let client = req.socket;
+                    let host = client 
+                        ? `${client.remoteAddress}:${client.remotePort}` 
+                        : '?';
                     console.log('[Controller] Registering device');
-                    let newDevice = new Device(uuid, config.instanceName, null, null, getCurrentTimestamp(), 0.0, 0.0);
+                    let newDevice = new Device(uuid, config.instanceName, null, host, getCurrentTimestamp(), 0.0, 0.0);
                     await newDevice.create();
                     sendResponse(res, 'ok', {
                         assigned: false,
@@ -88,6 +92,12 @@ class RouteController {
                         let task = TaskFactory.instance.getTask();
                         if (task) {
                             console.log('[Controller] Sending job to check filtered IV at', task.lat, task.lon, 'for uuid', uuid);
+                            // Workaround For No GDS Heartbeat
+                            let client = req.socket;
+                            let host = client 
+                                ? `${client.remoteAddress}:${client.remotePort}` 
+                                : '?';
+                            await Device.touch(uuid, host, false);
                             sendResponse(res, 'ok', task);
                         } else {
                             console.warn('[Controller] No tasks available yet for uuid', uuid);
