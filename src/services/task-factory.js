@@ -61,8 +61,8 @@ class TaskFactory {
         if (pokemon === undefined || pokemon === null) {
             return null;
         }
-        console.log('[TaskFactory] Grabbed task for', pokemon.encounter_id, 'at', pokemon.latitude, pokemon.longitude);
         //TaskFactory.pvpCache.push(pokemon);
+        console.log('[TaskFactory] Grabbed task for', this.instanceName, pokemon.encounter_id, 'at', pokemon.latitude, pokemon.longitude,  pokemon.spawnpoint_id, this.minLevel, this.maxLevel);
         return {
             'area': this.instanceName,
             'action': 'scan_iv',
