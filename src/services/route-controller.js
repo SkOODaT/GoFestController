@@ -364,14 +364,17 @@ class RouteController {
             payload = [payload];
         }
         if (payload.length > 0) {
-            let filtered = payload.filter(x => {
+                let filtered = payload.filter(x => {
                 let geofence = GeofenceService.instance.getGeofence(x.message.latitude, x.message.longitude);
                 return x.type === 'pokemon' &&
-                    matchesIVFilter(x.message.individual_attack, x.message.individual_defense, x.message.individual_stamina) &&
                     (
-                        // No geofence names specified means no area restrictions
-                        // or if geofence is not null and is in allowed areas
-                        config.geofences.length === 0 || (geofence !== null && config.geofences.length > 0 ? config.geofences.includes(geofence.name || 'Unknown') : false)
+                        // If has `is_scout` webhook property queue payload or if matches IV filter
+                        x.message.is_scout || matchesIVFilter(x.message.individual_attack, x.message.individual_defense, x.message.individual_stamina) &&
+                        (
+                            // No geofence names specified means no area restrictions
+                            // or if geofence is not null and is in allowed areas
+                            config.geofences.length === 0 || (geofence !== null && config.geofences.length > 0 ? config.geofences.includes(geofence.name || 'Unknown') : false)
+                        )
                     )
             });
             if (filtered.length > 0) {
