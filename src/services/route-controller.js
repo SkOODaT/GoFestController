@@ -122,17 +122,16 @@ class RouteController {
             case 'get_account':
                 // Workaround For GDS get_account Spam
                 let accountCheck = await Account.getWithUsername(device.accountUsername, true);
-                if (accountCheck != undefined || accountCheck != null) {
-                    console.error('[Controller] GDS Pass Account Info.');
+                let account = await Account.getNewAccount(minLevel, maxLevel, true);
+                if (accountCheck instanceof Account) {
+                    console.log('[Controller] GDS Pass Account Info.');
                     sendResponse(res, 'ok', {
                         username: accountCheck.username.trim(),
                         password: accountCheck.password.trim(),
                         first_warning_timestamp: accountCheck.firstWarningTimestamp,
                         level: accountCheck.level
                     });
-                }
-                let account = await Account.getNewAccount(minLevel, maxLevel, true);
-                if (accountCheck === undefined || accountCheck === null) {
+                } else {
                     console.log('[Controller] GetAccount:', account);
                     if (device === undefined || device === null || 
                         account === undefined || account === null) {
